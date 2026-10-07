@@ -29,7 +29,7 @@ Vercel Project → Settings → Domains → ডোমেইন যোগ কর�
 `src/lib/engine.js`-এর `TPL` অ্যারেতে একটি অবজেক্ট যোগ করুন:
 ```js
 { n:"টেমপ্লেটের নাম",
-  ty:["news","quote"],            // কোন কনটেন্ট ধরনে আসবে
+  ty:["news"],                    // কোন মোডে আসবে: news, poetry, quote, typography, bangladesh, islamic, business
   f:[F.ns, F.nb],                 // [শিরোনামের ফন্ট, বডির ফন্ট]
   p:[[bg,fg,ac],[bg,fg,ac],[bg,fg,ac]],  // ৩টি রঙের প্যালেট
   d(x,W,H,u,c,f){                 // x=ক্যানভাস, u=সাইজ-ইউনিট, c={bg,fg,ac}
