@@ -28,3 +28,4 @@ button.p{background:var(--br);border-color:var(--br);color:var(--bi)}
 .th.sel{border-color:var(--br)}.th canvas{width:100%;height:auto;display:block}
 .th small{display:block;padding:5px 8px;color:var(--mute);font-size:.75rem}
 .chk{display:flex;gap:6px;align-items:center;font-size:.9rem}.chk input{width:auto}
+.modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.mode{display:grid;gap:1px;text-align:left;padding:10px 12px;opacity:.55}.mode small{color:var(--mute);font-weight:400;font-size:.75rem}.mode.on{opacity:1;border:2px solid var(--br);background:color-mix(in srgb,var(--br) 9%,var(--pn))}

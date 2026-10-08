@@ -5,9 +5,18 @@ const SS: any = S;
 type D = { i: number; p: number };
 const TYPES = [["auto","অটো ডিটেক্ট"],["news","সংবাদ"],["quote","উক্তি"],["poetry","কবিতা"],["literature","সাহিত্য"],["thought","ব্যক্তিগত ভাবনা"],["announcement","ঘোষণা"],["motivational","অনুপ্রেরণা"],["islamic","ইসলামিক"],["bangladesh","বাংলাদেশ থিম"],["education","শিক্ষামূলক"],["business","ব্যবসা"],["custom","কাস্টম (সব)"]];
 const PLS = [["fb","ফেসবুক ১২০০×৬৩০"],["ig","ইনস্টাগ্রাম স্কয়ার ১০৮০×১০৮০"],["igp","ইনস্টাগ্রাম পোর্ট্রেট ১০৮০×১৩৫০"],["story","স্টোরি ১০৮০×১৯২০"],["yt","ইউটিউব কমিউনিটি ১২৮০×৭২০"],["x","X / টুইটার ১৬০০×৯০০"],["custom","কাস্টম সাইজ"]];
-const FONTS = [["auto","টেমপ্লেটের ডিফল্ট"],["Noto Serif Bengali","Noto Serif Bengali"],["Noto Sans Bengali","Noto Sans Bengali"],["Hind Siliguri","Hind Siliguri"],["Tiro Bangla","Tiro Bangla"],["Anek Bangla","Anek Bangla"],["Baloo Da 2","Baloo Da 2"]];
+const FONTS = [["auto","টেমপ্লেটের ডিফল্ট"],["Noto Serif Bengali","Noto Serif Bengali"],["Noto Sans Bengali","Noto Sans Bengali"],["Hind Siliguri","Hind Siliguri"],["Tiro Bangla","Tiro Bangla"],["Anek Bangla","Anek Bangla"],["Baloo Da 2","Baloo Da 2"],["Mina","Mina (ক্যালিগ্রাফি বোল্ড)"],["Galada","Galada (ক্যালিগ্রাফি)"],["Atma","Atma (তুলির টান)"]];
 const LPS = [["tr","উপরে ডানে"],["tl","উপরে বামে"],["br","নিচে ডানে"],["bl","নিচে বামে"]];
 const init = { text: "আমার জন্মভূমি, প্রিয় মাতৃভূমি বাংলাদেশ।", sub: "", cat: "", author: "", dt: "", url: "", page: "", web: "", type: "auto", pl: "fb", cw: 1080, ch: 1080, font: "auto", sc: 100, lo: 100, lp: "tr", pc: "", ac: "" };
+const MODES: Record<string, { n: string; g: string; hint: string; tl: string; au: string; fields: string[] }> = {
+  bd: { n: "বাংলাদেশ", g: "bangladesh", hint: "জাতীয় থিমের কার্ড", tl: "কার্ডের লেখা", au: "লেখক / সূত্র", fields: ["cat", "dt", "author"] },
+  news: { n: "সংবাদ", g: "news", hint: "শিরোনাম, লিংক, ছবি ও তারিখসহ", tl: "শিরোনাম", au: "লেখক / সূত্র", fields: ["url", "sub", "cat", "author", "dt", "img"] },
+  poetry: { n: "কবিতা ও সাহিত্য", g: "poetry", hint: "কবিতা, গদ্যাংশ, বইয়ের লাইন", tl: "কবিতা বা লেখা (লাইন ভেঙে লিখুন)", au: "কবি / লেখক", fields: ["author"] },
+  quote: { n: "উক্তি", g: "quote", hint: "উক্তি ও অনুপ্রেরণা", tl: "উক্তি", au: "যার উক্তি", fields: ["author"] },
+  type: { n: "টাইপোগ্রাফি", g: "typography", hint: "বড় শব্দ ও অক্ষরে সাজানো", tl: "লেখা (Enter = নতুন লাইন, *শব্দ* = হাইলাইট)", au: "লেখক", fields: ["sub", "author"] },
+  islamic: { n: "ইসলামিক", g: "islamic", hint: "আয়াত, দোয়া, বাণী", tl: "লেখা", au: "সূত্র", fields: ["author"] },
+  biz: { n: "ব্যবসা", g: "business", hint: "ঘোষণা, প্রোডাক্ট, কর্পোরেট", tl: "শিরোনাম", au: "সূত্র", fields: ["url", "sub", "cat", "dt", "img"] },
+};
 const shuf = <T,>(a: T[]) => a.map((v) => [Math.random(), v] as const).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
 const bn = (d: Date) => d.toLocaleDateString("bn-BD", { day: "numeric", month: "long", year: "numeric" });
 
@@ -19,6 +28,10 @@ export default function Studio() {
   const [tick, setTick] = useState(0);
   const [msg, setMsg] = useState("");
   const [x2, setX2] = useState(false);
+  const [mode, setMode] = useState("bd");
+  const imgs = useRef<any>({ img: null, logo: null });
+  const M = MODES[mode];
+  const has = (k: string) => M.fields.includes(k);
   const refs = useRef<(HTMLCanvasElement | null)[]>([]);
   const pv = useRef<HTMLCanvasElement>(null);
   const set = (k: string, val: any) => setV((p) => ({ ...p, [k]: val }));
@@ -27,12 +40,15 @@ export default function Studio() {
     const [w, h] = v.pl === "custom" ? [+v.cw || 1080, +v.ch || 1080] : (PLAT as any)[v.pl];
     return [Math.min(Math.max(w, 300), 3000), Math.min(Math.max(h, 300), 3000)];
   };
-  const sync = () => Object.assign(SS, { text: v.text.trim() || "এখানে আপনার লেখা", sub: v.sub.trim(), cat: v.cat.trim(), author: v.author.trim(), dt: v.dt.trim(), url: v.url.trim(), page: v.page.trim(), web: v.web.trim(), font: v.font, sc: v.sc / 100, lo: v.lo / 100, lp: v.lp, pc: v.pc || null, ac: v.ac || null });
+  const sync = () => {
+    const on = (k: string) => (has(k) ? String((v as any)[k]).trim() : "");
+    Object.assign(SS, { text: v.text.trim() || "এখানে আপনার লেখা", sub: on("sub"), cat: on("cat"), author: on("author"), dt: on("dt"), url: on("url"), page: v.page.trim(), web: v.web.trim(), font: v.font, sc: v.sc / 100, lo: v.lo / 100, lp: v.lp, pc: v.pc || null, ac: v.ac || null, img: has("img") ? imgs.current.img : null, logo: imgs.current.logo });
+  };
 
   const loadImg = (src: string, kind: "img" | "logo") => {
     const im = new Image();
     if (!src.startsWith("data:")) im.crossOrigin = "anonymous";
-    im.onload = () => { SS[kind] = im; if (kind === "logo") SS.logoData = src; setTick((t) => t + 1); };
+    im.onload = () => { imgs.current[kind] = im; if (kind === "logo") SS.logoData = src; setTick((t) => t + 1); };
     im.onerror = () => say("ছবি লোড করা যায়নি।");
     im.src = src;
   };
@@ -42,13 +58,13 @@ export default function Studio() {
   };
   const gen = (keep: boolean) => {
     if (!v.text.trim()) { say("অনুগ্রহ করে আগে কিছু লিখুন।"); return; }
-    const ty = v.type === "auto" ? detect(v.text) : v.type, all = TPL.map((_, i) => i);
-    const pool = ty === "custom" ? [] : all.filter((i) => TPL[i].ty.includes(ty));
-    const order = [...shuf(pool), ...shuf(all.filter((i) => !pool.includes(i)))].slice(0, 10);
+    const all: D[] = [];
+    TPL.forEach((t, i) => { if (t.ty.includes(M.g)) for (let p = 0; p < 3; p++) all.push({ i, p }); });
+    const first = shuf(Array.from(new Set(all.map((d) => d.i)))).map((i) => ({ i, p: Math.floor(Math.random() * 3) }));
+    let n: D[] = [...first, ...shuf(all.filter((d) => !first.some((f) => f.i === d.i && f.p === d.p)))];
     const prev = keep && ds[sel] ? ds[sel] : null;
-    let n: D[] = order.filter((i) => !prev || i !== prev.i).map((i) => ({ i, p: Math.floor(Math.random() * 3) }));
-    if (prev) n = [{ i: prev.i, p: (prev.p + 1 + Math.floor(Math.random() * 2)) % 3 }, ...n].slice(0, 10);
-    setDs(n); setSel(0);
+    if (prev) { const k = { i: prev.i, p: (prev.p + 1 + Math.floor(Math.random() * 2)) % 3 }; n = [k, ...n.filter((d) => !(d.i === k.i && d.p === k.p))]; }
+    setDs(n.slice(0, 10)); setSel(0);
   };
   const fetchUrl = async () => {
     if (!v.url.trim()) { say("আগে লিংক পেস্ট করুন।"); return; }
@@ -81,20 +97,20 @@ export default function Studio() {
 
   useEffect(() => {
     const s = "অআকখ বাংলা";
-    Promise.all((Object.values(F) as string[]).flatMap((f) => [400, 700].map((w) => document.fonts.load(`${w} 40px "${f}"`, s))).concat(document.fonts.load('500 40px "Hind Siliguri"', s), document.fonts.load('500 40px "Noto Sans Bengali"', s)))
+    Promise.all((Object.values(F) as string[]).flatMap((f) => [400, 700, 800, 900].map((w) => document.fonts.load(`${w} 40px "${f}"`, s))).concat(document.fonts.load('500 40px "Hind Siliguri"', s), document.fonts.load('500 40px "Noto Sans Bengali"', s)))
       .catch(() => {}).then(() => setReady(true));
     try {
       const b = JSON.parse(localStorage.getItem("bcs") || "null");
       if (b) { setV((p) => ({ ...p, page: b.pg || "", web: b.web || "", pc: b.pc || "", ac: b.ac || "", font: b.font || "auto" })); if (b.logo) loadImg(b.logo, "logo"); }
     } catch {}
   }, []);
-  useEffect(() => { if (ready) gen(false); }, [ready]);
+  useEffect(() => { if (ready) gen(false); }, [ready, mode]);
   useEffect(() => {
     if (!ready || !ds.length) return;
     sync(); const [W, H] = size();
     ds.forEach((d, k) => { const c = refs.current[k]; if (c) drawCard(c, d, W, H); });
     if (pv.current) drawCard(pv.current, ds[Math.min(sel, ds.length - 1)], W, H);
-  }, [v, ds, sel, ready, tick]);
+  }, [v, ds, sel, ready, tick, mode]);
 
   const I = (label: string, k: string, ph?: string) => (
     <label className="f"><span>{label}</span><input value={(v as any)[k]} placeholder={ph} onChange={(e) => set(k, e.target.value)} /></label>);
@@ -107,31 +123,35 @@ export default function Studio() {
       <main className="app">
         <aside className="panel">
           <section>
-            <h2>১. লেখা বা লিংক</h2>
-            <label className="f"><span>মূল লেখা</span><textarea value={v.text} onChange={(e) => set("text", e.target.value)} /></label>
-            <div className="row"><div className="grow">{I("আর্টিকেল বা নিউজ লিংক", "url", "https://example.com/news")}</div><button type="button" onClick={fetchUrl}>লিংক থেকে আনুন</button></div>
-            {I("উপশিরোনাম (ঐচ্ছিক)", "sub")}
-            <div className="two">{I("ক্যাটাগরি লেবেল", "cat", "যেমন: সংবাদ")}{I("লেখক / সূত্র", "author")}</div>
-            <div className="row"><div className="grow">{I("তারিখ (ঐচ্ছিক)", "dt", "৭ অক্টোবর ২০২৬")}</div><button type="button" onClick={() => set("dt", bn(new Date()))}>আজকের তারিখ</button></div>
+            <h2>কোন ধরনের কার্ড বানাবেন?</h2>
+            <div className="modes" role="tablist">
+              {Object.entries(MODES).map(([k, m]) => (
+                <button type="button" role="tab" aria-selected={mode === k} key={k} className={"mode" + (mode === k ? " on" : "")} onClick={() => setMode(k)}><b>{m.n}</b><small>{m.hint}</small></button>))}
+            </div>
           </section>
           <section>
-            <h2>২. ধরন ও প্ল্যাটফর্ম</h2>
-            <div className="two">{Sl("কনটেন্টের ধরন", "type", TYPES)}{Sl("প্ল্যাটফর্ম", "pl", PLS)}</div>
+            <h2>{M.n} কার্ডের লেখা</h2>
+            <label className="f"><span>{M.tl}</span><textarea value={v.text} onChange={(e) => set("text", e.target.value)} /></label>
+            {has("url") && <div className="row"><div className="grow">{I("আর্টিকেল বা নিউজ লিংক", "url", "https://example.com/news")}</div><button type="button" onClick={fetchUrl}>লিংক থেকে আনুন</button></div>}
+            {has("sub") && I("উপশিরোনাম (ঐচ্ছিক)", "sub")}
+            {(has("cat") || has("author")) && <div className="two">{has("cat") && I("ক্যাটাগরি লেবেল", "cat", "যেমন: সংবাদ")}{has("author") && I(M.au, "author")}</div>}
+            {has("dt") && <div className="row"><div className="grow">{I("তারিখ (ঐচ্ছিক)", "dt", "৭ অক্টোবর ২০২৬")}</div><button type="button" onClick={() => set("dt", bn(new Date()))}>আজকের তারিখ</button></div>}
+            {has("img") && <div className="row"><label className="f grow"><span>ছবি</span><input type="file" accept="image/*" onChange={(e) => pick(e, "img")} /></label><button type="button" onClick={() => { imgs.current.img = null; setTick((t) => t + 1); }}>সরান</button></div>}
+          </section>
+          <section>
+            <h2>প্ল্যাটফর্ম</h2>
+            {Sl("কার্ডের সাইজ", "pl", PLS)}
             {v.pl === "custom" && <div className="two">{I("প্রস্থ", "cw")}{I("উচ্চতা", "ch")}</div>}
-            <div className="bar"><button type="button" className="p" onClick={() => gen(false)}>ডিজাইন তৈরি করুন</button><button type="button" onClick={() => gen(true)}>রিমিক্স</button></div>
+            <div className="bar"><button type="button" className="p" onClick={() => gen(false)}>নতুন ডিজাইন তৈরি করুন</button><button type="button" onClick={() => gen(true)}>রিমিক্স</button></div>
           </section>
           <section>
-            <h2>৩. ব্র্যান্ড ও স্টাইল</h2>
+            <h2>ব্র্যান্ড ও স্টাইল</h2>
             <div className="two">{I("পেজের নাম", "page")}{I("ওয়েবসাইট", "web", "example.com")}</div>
             <div className="two">{Sl("ফন্ট", "font", FONTS)}<label className="f"><span>লেখার আকার</span><input type="range" min={60} max={130} value={v.sc} onChange={(e) => set("sc", +e.target.value)} /></label></div>
             <div className="two"><label className="f"><span>মূল রং</span><input type="color" value={v.pc || "#0a5c46"} onChange={(e) => set("pc", e.target.value)} /></label><label className="f"><span>অ্যাকসেন্ট রং</span><input type="color" value={v.ac || "#d8344a"} onChange={(e) => set("ac", e.target.value)} /></label></div>
-            <div className="bar"><button type="button" onClick={() => setV((p) => ({ ...p, pc: "", ac: "" }))}>ডিফল্ট রং</button><button type="button" onClick={save}>ব্র্যান্ড কিট সেভ</button></div>
-          </section>
-          <section>
-            <h2>৪. ছবি ও লোগো</h2>
-            <div className="two"><label className="f"><span>ছবি</span><input type="file" accept="image/*" onChange={(e) => pick(e, "img")} /></label><label className="f"><span>লোগো</span><input type="file" accept="image/*" onChange={(e) => pick(e, "logo")} /></label></div>
+            <div className="row"><label className="f grow"><span>লোগো</span><input type="file" accept="image/*" onChange={(e) => pick(e, "logo")} /></label><button type="button" onClick={() => { imgs.current.logo = null; SS.logoData = null; setTick((t) => t + 1); }}>সরান</button></div>
             <div className="two">{Sl("লোগোর জায়গা", "lp", LPS)}<label className="f"><span>লোগোর স্বচ্ছতা</span><input type="range" min={20} max={100} value={v.lo} onChange={(e) => set("lo", +e.target.value)} /></label></div>
-            <div className="bar"><button type="button" onClick={() => { SS.img = null; setTick((t) => t + 1); }}>ছবি সরান</button><button type="button" onClick={() => { SS.logo = null; SS.logoData = null; setTick((t) => t + 1); }}>লোগো সরান</button></div>
+            <div className="bar"><button type="button" onClick={() => setV((p) => ({ ...p, pc: "", ac: "" }))}>ডিফল্ট রং</button><button type="button" onClick={save}>ব্র্যান্ড কিট সেভ</button></div>
           </section>
         </aside>
         <div className="stage">
